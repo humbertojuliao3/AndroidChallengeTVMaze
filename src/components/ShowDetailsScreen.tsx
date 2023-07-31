@@ -1,0 +1,63 @@
+import React from 'react'
+import {
+  ImageBackground,
+  SafeAreaView,
+  ScrollView,
+  Text,
+  useWindowDimensions,
+  View,
+} from 'react-native'
+import Icon from 'react-native-vector-icons/FontAwesome'
+import RenderHtml from 'react-native-render-html'
+import {resizeMode} from '../Utils'
+import {useShowsDetailsAPI} from '../services/api/ApiConsumer'
+import Header from './Header'
+import EpisodesHorizontalList from './EpisodesHorizontalList'
+import {htmlStyle, styles} from './styles/ShowDetailsScreenStyle'
+import { useSelector } from 'react-redux'
+
+export default function ShowDetailsScreen() {
+  const reduxState = useSelector(state=> state)
+  const showInfo = useSelector(state=> state.show)
+  const {episodesBySeason} = useShowsDetailsAPI(showInfo.id)
+  const {width} = useWindowDimensions()
+  console.log(showInfo.summary)
+  const htmlSummary = `
+    <div style="${htmlStyle}">
+      ${showInfo.summary}
+    </div>
+  `
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <Header />
+      <ImageBackground
+        style={[styles.posterView]}
+        resizeMode={resizeMode.cover}
+        source={{uri: showInfo?.image?.original}}>
+        <ScrollView contentContainerStyle={[styles.scrollView, {width}]}>
+          <Text style={styles.h1}>{showInfo.name}</Text>
+          <Text style={styles.h3}>{showInfo.genres.join(', ')}</Text>
+          <View style={styles.scheduleView}>
+            <Icon name={'calendar'} size={30} color={'white'} />
+            <Text style={styles.h2}>
+              {'Every ' + showInfo.schedule.days.join(', ')}
+            </Text>
+          </View>
+          <View style={styles.scheduleView}>
+            <Icon name={'clock-o'} size={30} color={'white'} />
+            <Text style={styles.h2}>{'at ' + showInfo.schedule.time}</Text>
+          </View>
+          <RenderHtml contentWidth={width} source={{html: htmlSummary}} />
+
+          {episodesBySeason?.map?.((season, i) => (
+            <View key={`season${i}`}>
+              <Text style={styles.h2}>{`Season ${i}`}</Text>
+              <EpisodesHorizontalList season={season} />
+            </View>
+          ))}
+        </ScrollView>
+      </ImageBackground>
+    </SafeAreaView>
+  )
+}
